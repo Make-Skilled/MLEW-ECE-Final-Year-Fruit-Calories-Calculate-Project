@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Animated Background */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        body {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #6b8dd6, #8e37d7);
+            background-size: 300% 300%;
+            animation: gradientBG 10s ease infinite;
+        }
+
+        /* Glassmorphism Card */
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .glassmorphism:hover {
+            transform: scale(1.02);
+        }
+
+        /* File Input */
+        input[type="file"] {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type="file"]:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Upload Button */
+        .upload-btn {
+            background: linear-gradient(to right, #28a745, #218838);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        /* Prediction Box */
+        .prediction-box {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .show-result {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Text Enhancements */
+        .title {
+            text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center h-screen">
+    <div class="glassmorphism max-w-lg w-full">
+        <h1 class="text-4xl font-bold text-white mb-4 title">Fruit Image Classifier 🍎</h1>
+        <p class="text-white text-lg mb-6">Upload an image and get instant classification</p>
+
+        <!-- Upload Form -->
+        <form action="/predict" method="post" enctype="multipart/form-data" class="space-y-4">
+            <label for="image" class="block text-lg font-medium text-white">Choose an image:</label>
+            <input type="file" name="image" id="image" required 
+                class="block w-full text-sm text-gray-200
+                       file:mr-4 file:py-2 file:px-4
+                       file:rounded-lg file:border-0
+                       file:text-sm file:font-semibold
+                       file:bg-blue-600 file:text-white
+                       hover:file:bg-blue-700 transition duration-300">
+            <input type="submit" value="Upload & Classify" 
+                class="w-full py-3 px-4 text-white text-lg font-semibold rounded-lg 
+                       upload-btn cursor-pointer shadow-md">
+        </form>
+        
+        <!-- Prediction Results -->
+        {% if class_name %}
+        <div class="mt-6 p-6 bg-white rounded-lg border-2 border-green-500 shadow-md prediction-box show-result">
+            <h2 class="text-2xl font-semibold text-gray-800">Prediction Result:</h2>
+            <p class="text-lg text-gray-700 mt-2"><strong>Fruit:</strong> <span class="text-green-600">{{ class_name }}</span></p>
+            <p class="text-lg text-gray-700"><strong>Calories:</strong> <span class="text-blue-500">{{ calories }}</span></p>
+        </div>
+        {% else %}
+        <div class="mt-6 p-6 bg-white rounded-lg border-2 border-gray-300 shadow-md prediction-box">
+            <h2 class="text-2xl font-semibold text-gray-800">Prediction Result:</h2>
+            <p class="text-lg text-gray-500 mt-2">Waiting for prediction...</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
