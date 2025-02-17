@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Results - Fruit Nutrition App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Prediction Results -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Prediction Results</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3>{{ class_name|safe_title }}</h3>
+                    <p class="text-muted">Confidence: {{ "%.1f"|format(confidence * 100) }}%</p>
+                </div>
+                
+                <div class="nutrition-info">
+                    <h5>Nutritional Information ({{ serving_size }}g serving)</h5>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Calories:</th>
+                                <td>{{ calories }}</td>
+                            </tr>
+                            <tr>
+                                <th>Protein:</th>
+                                <td>{{ nutrition_data.protein }}g</td>
+                            </tr>
+                            <tr>
+                                <th>Carbs:</th>
+                                <td>{{ nutrition_data.carbs }}g</td>
+                            </tr>
+                            <tr>
+                                <th>Fiber:</th>
+                                <td>{{ nutrition_data.fiber }}g</td>
+                            </tr>
+                            <tr>
+                                <th>Vitamin C:</th>
+                                <td>{{ nutrition_data.vitamin_c }}mg</td>
+                            </tr>
+                            <tr>
+                                <th>Season:</th>
+                                <td>{{ nutrition_data.season }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-3">
+                        <h5>Health Benefits</h5>
+                        <p>{{ nutrition_data.benefits }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recipes and Alternatives -->
+    <div class="col-md-6">
+        <!-- Recipe Suggestions -->
+        {% if recipes %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Recipe Suggestions</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for category, category_recipes in recipes.items() %}
+                        {% for recipe_name, recipe in category_recipes.items() %}
+                            <div class="col-12 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ recipe_name }}</h5>
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                {{ recipe.preparation_time }} | {{ recipe.difficulty }}
+                                            </small>
+                                        </p>
+                                        <p class="card-text">{{ recipe.instructions }}</p>
+                                        <span class="badge bg-primary">{{ recipe.calories }} calories</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Alternative Fruits -->
+        {% if alternatives %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Similar Alternatives</h4>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for alt in alternatives %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ alt.name.title() }}</h5>
+                            <small>{{ alt.value }} {{ alt.difference_type }}</small>
+                        </div>
+                        <p class="mb-1">Season: {{ alt.season }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Complementary Fruits -->
+        {% if complementary %}
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Complementary Fruits</h4>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for comp in complementary %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ comp.name.title() }}</h5>
+                            <small>{{ comp.value }} {{ comp.reason }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Scanner
+            </a>
+            {% if current_user.is_authenticated %}
+            <div>
+                <a href="{{ url_for('recipes', fruit=class_name) }}" class="btn btn-primary me-2">
+                    <i class="fas fa-utensils"></i> View All Recipes
+                </a>
+                <a href="{{ url_for('compare') }}?fruit1={{ class_name }}" class="btn btn-success">
+                    <i class="fas fa-balance-scale"></i> Compare
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

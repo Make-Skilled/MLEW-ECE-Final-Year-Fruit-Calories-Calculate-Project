@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Fruits - Fruit Nutrition App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Compare Fruits</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="fruit1" class="form-label">First Fruit</label>
+                                <select class="form-select" id="fruit1" name="fruits" required>
+                                    <option value="">Select a fruit</option>
+                                    {% for fruit in fruits %}
+                                    <option value="{{ fruit }}">{{ fruit|safe_title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="fruit2" class="form-label">Second Fruit</label>
+                                <select class="form-select" id="fruit2" name="fruits" required>
+                                    <option value="">Select a fruit</option>
+                                    {% for fruit in fruits %}
+                                    <option value="{{ fruit }}">{{ fruit|safe_title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="serving_size" class="form-label">Serving Size (g)</label>
+                                <input type="number" class="form-control" id="serving_size" name="serving_size" 
+                                       value="100" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Compare</button>
+                    </div>
+                </form>
+
+                {% if comparison %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nutrient</th>
+                                {% for fruit in comparison.keys() %}
+                                <th>{{ fruit.title() }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Calories</td>
+                                {% for fruit, data in comparison.items() %}
+                                <td>{{ "%.1f"|format(data.calories) }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Protein (g)</td>
+                                {% for fruit, data in comparison.items() %}
+                                <td>{{ "%.1f"|format(data.protein) }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Carbs (g)</td>
+                                {% for fruit, data in comparison.items() %}
+                                <td>{{ "%.1f"|format(data.carbs) }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Fiber (g)</td>
+                                {% for fruit, data in comparison.items() %}
+                                <td>{{ "%.1f"|format(data.fiber) }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Vitamin C (mg)</td>
+                                {% for fruit, data in comparison.items() %}
+                                <td>{{ "%.1f"|format(data.vitamin_c) }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Season</td>
+                                {% for fruit, data in comparison.items() %}
+                                <td>{{ data.season }}</td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>Benefits</td>
+                                {% for fruit, data in comparison.items() %}
+                                <td>{{ data.benefits }}</td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fruit1Select = document.getElementById('fruit1');
+    const fruit2Select = document.getElementById('fruit2');
+
+    function updateOptions() {
+        const selectedFruit1 = fruit1Select.value;
+        const selectedFruit2 = fruit2Select.value;
+
+        // Reset options
+        Array.from(fruit1Select.options).forEach(option => {
+            option.disabled = option.value === selectedFruit2;
+        });
+
+        Array.from(fruit2Select.options).forEach(option => {
+            option.disabled = option.value === selectedFruit1;
+        });
+    }
+
+    fruit1Select.addEventListener('change', updateOptions);
+    fruit2Select.addEventListener('change', updateOptions);
+});
+</script>
+{% endblock %}

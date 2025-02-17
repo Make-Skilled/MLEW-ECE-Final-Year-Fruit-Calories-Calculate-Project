@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Meal Plans - Fruit Nutrition App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Create Meal Plan -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Create Meal Plan</h4>
+            </div>
+            <div class="card-body">
+                <form id="meal-plan-form">
+                    <div class="mb-3">
+                        <label for="fruit-select" class="form-label">Add Fruits</label>
+                        <select class="form-select" id="fruit-select">
+                            <option value="">Select a fruit</option>
+                            {% for fruit in fruits %}
+                            <option value="{{ fruit }}">{{ fruit|safe_title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="meal-items" class="mb-3">
+                        <!-- Meal items will be added here dynamically -->
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                    <div class="nutrition-summary mb-3">
+                        <h5>Nutritional Summary</h5>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Total Calories:</th>
+                                    <td id="total-calories">0</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Protein:</th>
+                                    <td id="total-protein">0g</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Fiber:</th>
+                                    <td id="total-fiber">0g</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Meal Plan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meal Plan Statistics -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Meal Plan Statistics</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h5>Today's Progress</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Calories</h6>
+                                    <h4>{{ "%.1f"|format(stats.today_calories) }}</h4>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {% if stats.calories_progress > 100 %}100{% else %}{{ stats.calories_progress|round|int }}{% endif %}%"
+                                             aria-valuenow="{{ stats.calories_progress|round|int }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ "%.1f"|format(stats.calories_progress) }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Goal: {{ stats.goal_calories }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Protein</h6>
+                                    <h4>{{ "%.1f"|format(stats.today_protein) }}g</h4>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" role="progressbar" 
+                                             style="width: {% if stats.protein_progress > 100 %}100{% else %}{{ stats.protein_progress|round|int }}{% endif %}%"
+                                             aria-valuenow="{{ stats.protein_progress|round|int }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ "%.1f"|format(stats.protein_progress) }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Goal: {{ stats.goal_protein }}g</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Fiber</h6>
+                                    <h4>{{ "%.1f"|format(stats.today_fiber) }}g</h4>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                             style="width: {% if stats.fiber_progress > 100 %}100{% else %}{{ stats.fiber_progress|round|int }}{% endif %}%"
+                                             aria-valuenow="{{ stats.fiber_progress|round|int }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ "%.1f"|format(stats.fiber_progress) }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Goal: {{ stats.goal_fiber }}g</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="weekly-summary mb-4">
+                    <h5>Weekly Summary</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Weekly Average</th>
+                                    <th>Today</th>
+                                    <th>Goal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Calories</td>
+                                    <td>{{ "%.1f"|format(stats.weekly_avg_calories) }}</td>
+                                    <td>{{ "%.1f"|format(stats.today_calories) }}</td>
+                                    <td>{{ stats.goal_calories }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Protein</td>
+                                    <td>{{ "%.1f"|format(stats.weekly_avg_protein) }}g</td>
+                                    <td>{{ "%.1f"|format(stats.today_protein) }}g</td>
+                                    <td>{{ stats.goal_protein }}g</td>
+                                </tr>
+                                <tr>
+                                    <td>Fiber</td>
+                                    <td>{{ "%.1f"|format(stats.weekly_avg_fiber) }}g</td>
+                                    <td>{{ "%.1f"|format(stats.today_fiber) }}g</td>
+                                    <td>{{ stats.goal_fiber }}g</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="meal-plan-stats mb-3">
+                    <h5>Meal Plan Statistics</h5>
+                    <p class="text-muted">Total Meal Plans: {{ stats.total_plans }}</p>
+                    {% if stats.total_plans > 0 %}
+                    <div class="statistics-container">
+                        <div class="mb-3">
+                            <label class="form-label">Average Calories per Plan: {{ "%.1f"|format(stats.avg_calories) }}</label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Average Protein per Plan: {{ "%.1f"|format(stats.avg_protein) }}g</label>
+                        </div>
+                    
+                    <!-- Fiber Progress -->
+                    <div class="mb-3">
+                        <label class="form-label">Average Fiber: {{ "%.1f"|format(stats.avg_fiber) }}g</label>
+                        {% if stats.goal_fiber %}
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" 
+                                 style="width: {{ min(100, stats.fiber_progress)|round|int }}%"
+                                 aria-valuenow="{{ stats.fiber_progress|round|int }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ "%.1f"|format(stats.fiber_progress) }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">Goal: {{ stats.goal_fiber }}g</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">Create meal plans to see statistics</p>
+                {% endif %}
+                
+                {% if not stats.goal_calories and not stats.goal_protein and not stats.goal_fiber %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Set your nutritional goals in the 
+                    <a href="{{ url_for('goals') }}">My Goals</a> page to track your progress!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Saved Meal Plans -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Saved Meal Plans</h4>
+            </div>
+            <div class="card-body">
+                {% if meal_plans %}
+                <div class="list-group">
+                    {% for plan in meal_plans %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Meal Plan #{{ plan.id }}</h5>
+                            <small class="text-muted">{{ plan.plan_date|datetime }}</small>
+                        </div>
+                        <p class="mb-1">Total Calories: {{ plan.total_calories }}</p>
+                        <p class="mb-1">
+                            <strong>Fruits:</strong><br>
+                            {% for fruit in plan.fruits|fromjson %}
+                            {{ fruit.name|safe_title }} ({{ fruit.serving_size }}g) - {{ fruit.calories }} calories<br>
+                            {% endfor %}
+                        </p>
+                        {% if plan.notes %}
+                        <p class="mb-1"><strong>Notes:</strong> {{ plan.notes }}</p>
+                        {% endif %}
+                        <div class="mt-2">
+                            <button class="btn btn-danger btn-sm" onclick="deleteMealPlan({{ plan.id }})">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No meal plans saved yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateNutritionSummary() {
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalFiber = 0;
+    
+    document.querySelectorAll('#meal-items input[name="fruits[]"]').forEach(input => {
+        const fruit = JSON.parse(input.value);
+        totalCalories += fruit.calories;
+        totalProtein += fruit.protein || 0;
+        totalFiber += fruit.fiber || 0;
+    });
+    
+    document.getElementById('total-calories').textContent = totalCalories.toFixed(1);
+    document.getElementById('total-protein').textContent = totalProtein.toFixed(1) + 'g';
+    document.getElementById('total-fiber').textContent = totalFiber.toFixed(1) + 'g';
+}
+
+function calculateServingNutrition(baseNutrition, servingSize) {
+    const scaleFactor = servingSize / 100; // Convert to percentage
+    return {
+        calories: baseNutrition.calories * scaleFactor,
+        protein: baseNutrition.protein * scaleFactor,
+        fiber: baseNutrition.fiber * scaleFactor
+    };
+}
+
+function updateServingSize(fruitItemDiv, newServingSize) {
+    const fruitInput = fruitItemDiv.querySelector('input[name="fruits[]"]');
+    const fruit = JSON.parse(fruitInput.value);
+    
+    // Get base nutrition for 100g
+    fetch(`/get_nutrition/${encodeURIComponent(fruit.name)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const newNutrition = calculateServingNutrition(data, newServingSize);
+                fruit.serving_size = newServingSize;
+                fruit.calories = newNutrition.calories;
+                fruit.protein = newNutrition.protein;
+                fruit.fiber = newNutrition.fiber;
+                
+                // Update the display
+                const displaySpan = fruitItemDiv.querySelector('.fruit-info');
+                displaySpan.textContent = `${fruit.name} (${newServingSize}g) - ${newNutrition.calories.toFixed(1)} calories`;
+                
+                // Update the hidden input
+                fruitInput.value = JSON.stringify(fruit);
+                
+                // Update totals
+                updateNutritionSummary();
+            }
+        });
+}
+
+document.getElementById('fruit-select').addEventListener('change', function(e) {
+    if (!e.target.value) return;
+    
+    const fruit = {
+        name: e.target.value,
+        serving_size: 100,  // Default serving size
+        calories: 0,  // Will be filled from nutrition database
+        protein: 0,
+        fiber: 0
+    };
+    
+    // Fetch nutrition data for the selected fruit
+    fetch(`/get_nutrition/${encodeURIComponent(fruit.name)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const nutrition = calculateServingNutrition(data, fruit.serving_size);
+                fruit.calories = nutrition.calories;
+                fruit.protein = nutrition.protein;
+                fruit.fiber = nutrition.fiber;
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'meal-plan-item';
+                itemDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center border p-2 rounded mb-2">
+                        <div class="d-flex align-items-center">
+                            <span class="fruit-info">${fruit.name} (${fruit.serving_size}g) - ${fruit.calories.toFixed(1)} calories</span>
+                            <div class="ms-3">
+                                <input type="number" class="form-control form-control-sm serving-size" 
+                                       style="width: 80px" value="${fruit.serving_size}" 
+                                       min="1" max="1000" step="1"
+                                       onchange="updateServingSize(this.closest('.meal-plan-item'), parseInt(this.value))">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.meal-plan-item').remove(); updateNutritionSummary();">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" name="fruits[]" value='${JSON.stringify(fruit)}'>
+                `;
+                document.getElementById('meal-items').appendChild(itemDiv);
+                updateNutritionSummary();
+                e.target.value = '';  // Reset select
+            }
+        });
+});
+
+document.getElementById('meal-plan-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const fruits = [];
+    formData.getAll('fruits[]').forEach(fruit => fruits.push(JSON.parse(fruit)));
+    
+    try {
+        const response = await fetch('/save_meal_plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                fruits: fruits,
+                notes: formData.get('notes')
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('Meal plan saved successfully!');
+            location.reload();
+        } else {
+            alert('Error saving meal plan: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error saving meal plan: ' + error);
+    }
+});
+
+async function deleteMealPlan(planId) {
+    if (!confirm('Are you sure you want to delete this meal plan?')) return;
+    
+    try {
+        const response = await fetch(`/delete_meal_plan/${planId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error deleting meal plan: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error deleting meal plan: ' + error);
+    }
+}
+</script>
+{% endblock %}

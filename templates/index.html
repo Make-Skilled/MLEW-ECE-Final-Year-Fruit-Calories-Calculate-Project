@@ -1,116 +1,325 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Classifier</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        /* Animated Background */
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        body {
-            background: linear-gradient(-45deg, #667eea, #764ba2, #6b8dd6, #8e37d7);
-            background-size: 300% 300%;
-            animation: gradientBG 10s ease infinite;
-        }
+{% extends "base.html" %}
 
-        /* Glassmorphism Card */
-        .glassmorphism {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(12px);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 2rem;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
+{% block title %}Home - Fruit Nutrition App{% endblock %}
 
-        .glassmorphism:hover {
-            transform: scale(1.02);
-        }
+{% block content %}
+<div class="row">
+    <!-- Main Scanner Section -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-camera"></i> Fruit Nutrition Scanner</h4>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data" class="mb-4">
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Select Fruit Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="serving_size" class="form-label">Serving Size (grams)</label>
+                        <input type="number" class="form-control" id="serving_size" name="serving_size" value="100" min="1" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Analyze Image
+                        </button>
+                    </div>
+                </form>
 
-        /* File Input */
-        input[type="file"] {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+                {% if class_name %}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="card-title">Basic Information</h5>
+                                <p><strong>Fruit:</strong> {{ class_name }}</p>
+                                <p><strong>Calories:</strong> {{ calories }} kcal</p>
+                                <p><strong>Serving Size:</strong> {{ serving_size }}g</p>
+                                <p><strong>Confidence:</strong> {{ "%.2f"|format(confidence * 100) }}%</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="card-title">Nutritional Information</h5>
+                                <p><strong>Protein:</strong> {{ nutrition_data.protein }}g</p>
+                                <p><strong>Carbs:</strong> {{ nutrition_data.carbs }}g</p>
+                                <p><strong>Fiber:</strong> {{ nutrition_data.fiber }}g</p>
+                                <p><strong>Vitamin C:</strong> {{ nutrition_data.vitamin_c }}mg</p>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h5 class="card-title">Health Benefits</h5>
+                            <p>{{ nutrition_data.benefits }}</p>
+                        </div>
+                        <div class="mt-3">
+                            <button onclick="addToMealPlan()" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add to Meal Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
 
-        input[type="file"]:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Upload Button */
-        .upload-btn {
-            background: linear-gradient(to right, #28a745, #218838);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-            transition: all 0.3s;
-        }
-
-        .upload-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-        }
-
-        /* Prediction Box */
-        .prediction-box {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-        }
-
-        .show-result {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Text Enhancements */
-        .title {
-            text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.8);
-        }
-    </style>
-</head>
-<body class="flex items-center justify-center h-screen">
-    <div class="glassmorphism max-w-lg w-full">
-        <h1 class="text-4xl font-bold text-white mb-4 title">Fruit Image Classifier 🍎</h1>
-        <p class="text-white text-lg mb-6">Upload an image and get instant classification</p>
-
-        <!-- Upload Form -->
-        <form action="/predict" method="post" enctype="multipart/form-data" class="space-y-4">
-            <label for="image" class="block text-lg font-medium text-white">Choose an image:</label>
-            <input type="file" name="image" id="image" required 
-                class="block w-full text-sm text-gray-200
-                       file:mr-4 file:py-2 file:px-4
-                       file:rounded-lg file:border-0
-                       file:text-sm file:font-semibold
-                       file:bg-blue-600 file:text-white
-                       hover:file:bg-blue-700 transition duration-300">
-            <input type="submit" value="Upload & Classify" 
-                class="w-full py-3 px-4 text-white text-lg font-semibold rounded-lg 
-                       upload-btn cursor-pointer shadow-md">
-        </form>
-        
-        <!-- Prediction Results -->
-        {% if class_name %}
-        <div class="mt-6 p-6 bg-white rounded-lg border-2 border-green-500 shadow-md prediction-box show-result">
-            <h2 class="text-2xl font-semibold text-gray-800">Prediction Result:</h2>
-            <p class="text-lg text-gray-700 mt-2"><strong>Fruit:</strong> <span class="text-green-600">{{ class_name }}</span></p>
-            <p class="text-lg text-gray-700"><strong>Calories:</strong> <span class="text-blue-500">{{ calories }}</span></p>
+                {% if error %}
+                <div class="alert alert-danger mt-3">
+                    {{ error }}
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% else %}
-        <div class="mt-6 p-6 bg-white rounded-lg border-2 border-gray-300 shadow-md prediction-box">
-            <h2 class="text-2xl font-semibold text-gray-800">Prediction Result:</h2>
-            <p class="text-lg text-gray-500 mt-2">Waiting for prediction...</p>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-balance-scale fa-2x mb-3 text-primary"></i>
+                        <h5>Compare Fruits</h5>
+                        <p class="text-muted">Compare nutritional values</p>
+                        <a href="{{ url_for('compare') }}" class="btn btn-outline-primary">Compare Now</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-utensils fa-2x mb-3 text-success"></i>
+                        <h5>Recipe Ideas</h5>
+                        <p class="text-muted">Discover healthy recipes</p>
+                        <a href="{{ url_for('recipes') }}" class="btn btn-outline-success">View Recipes</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-2x mb-3 text-info"></i>
+                        <h5>Track Progress</h5>
+                        <p class="text-muted">Monitor your goals</p>
+                        <a href="{{ url_for('goals') }}" class="btn btn-outline-info">View Goals</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Seasonal Fruits -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Seasonal Fruits</h5>
+            </div>
+            <div class="card-body">
+                {% if seasonal_fruits %}
+                <div class="list-group list-group-flush">
+                    {% for fruit in seasonal_fruits %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ fruit|safe_title }}
+                        <span class="badge bg-success rounded-pill">In Season</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No seasonal fruits available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Top Nutritious Fruits -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-star"></i> Top Nutritious Fruits</h5>
+            </div>
+            <div class="card-body">
+                {% if top_fruits %}
+                <div class="list-group list-group-flush">
+                    {% for fruit in top_fruits %}
+                    <div class="list-group-item">
+                        <h6 class="mb-1">{{ fruit.name.title() }}</h6>
+                        <p class="small text-muted mb-0">{{ fruit.value }}mg Vitamin C per serving</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                {% if scan_history %}
+                <div class="list-group list-group-flush">
+                    {% for scan in scan_history %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ scan[1]|safe_title }}</h6>
+                            <small class="text-muted">{{ scan[4]|datetime }}</small>
+                        </div>
+                        <p class="mb-1">{{ scan[2] }} calories ({{ scan[3] }}g serving)</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No recent scans</p>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
     </div>
-</body>
-</html>
+</div>
+
+{% if current_user.is_authenticated and progress_chart %}
+<!-- Progress Chart -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-area"></i> Weekly Progress</h5>
+            </div>
+            <div class="card-body">
+                <img src="data:image/png;base64,{{ progress_chart }}" class="img-fluid" alt="Weekly Progress">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        }
+
+        function addToMealPlan() {
+            switchTab('meal-plan');
+            const mealItems = document.getElementById('meal-items');
+            const fruit = {
+                name: '{{ class_name }}',
+                serving_size: {{ serving_size|default(100) }},
+                calories: {{ calories|default(0) }}
+            };
+
+            const itemHtml = `
+                <div class="bg-white bg-opacity-90 rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-bold">${fruit.name}</p>
+                            <p>${fruit.serving_size}g - ${fruit.calories} kcal</p>
+                        </div>
+                        <button type="button" onclick="this.parentElement.parentElement.remove()" 
+                                class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            mealItems.insertAdjacentHTML('beforeend', itemHtml);
+        }
+
+        document.getElementById('meal-plan-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const fruits = [];
+            document.querySelectorAll('#meal-items > div').forEach(item => {
+                const name = item.querySelector('p').textContent;
+                const [serving_size, calories] = item.querySelectorAll('p')[1].textContent.split(' - ');
+                fruits.push({
+                    name: name,
+                    serving_size: parseInt(serving_size),
+                    calories: parseInt(calories)
+                });
+            });
+
+            const response = await fetch('/save_meal_plan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fruits: fruits,
+                    notes: e.target.notes.value
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('Meal plan saved successfully!');
+                location.reload();
+            } else {
+                alert('Error saving meal plan: ' + result.message);
+            }
+        };
+    </script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function addToMealPlan() {
+        const mealItems = document.getElementById('meal-items');
+        const fruit = {
+            name: '{{ class_name }}',
+            serving_size: {{ serving_size|default(100) }},
+            calories: {{ calories|default(0) }}
+        };
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'meal-plan-item';
+        itemDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center border p-2 rounded mb-2">
+                <span>${fruit.name} (${fruit.serving_size}g)</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <input type="hidden" name="fruits[]" value='${JSON.stringify(fruit)}'>
+        `;
+        mealItems.appendChild(itemDiv);
+    }
+
+    document.getElementById('meal-plan-form')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const fruits = [];
+        formData.getAll('fruits[]').forEach(fruit => fruits.push(JSON.parse(fruit)));
+        
+        try {
+            const response = await fetch('/save_meal_plan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fruits: fruits,
+                    notes: formData.get('notes')
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                location.reload();
+            } else {
+                alert('Error saving meal plan: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error saving meal plan');
+        }
+    });
+</script>
+{% endblock %}

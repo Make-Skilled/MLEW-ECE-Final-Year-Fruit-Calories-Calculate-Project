@@ -1,0 +1,13 @@
+flask
+tensorflow==2.15.0
+pillow
+numpy
+flask-cors
+gunicorn
+flask-login
+flask-sqlalchemy
+passlib
+email-validator
+matplotlib
+pandas
+seaborn
